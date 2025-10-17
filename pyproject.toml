@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "transcripteur"
+version = "0.1.0"
+description = "CLI de transcription vidéo/audio en français basé sur Whisper"
+authors = ["Julien <julien@example.com>"]
+readme = "README.md"
+packages = [{ include = "transcripteur", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+whisper = "*"
+torchaudio = "*"
+ffmpeg-python = "*"
+typer = { version = "^0.12.0", extras = ["all"] }
+rich = "^13.7.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-cov = "^5.0.0"
+ruff = "^0.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
