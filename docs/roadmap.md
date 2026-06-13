@@ -20,14 +20,21 @@
 
 ## Phase 3 – Tests d’environnement et préparation du mode `mic` (Semaines 7-8)
 - Définir une batterie de tests pour profiler l’environnement de la machine (CPU/GPU, RAM, système) et les contraintes spécifiques au mode dictée.
-- Étendre la commande `doctor` ou introduire une commande dédiée (par exemple `benchmark`) pour :
-  - tester plusieurs modèles Whisper (`tiny`, `base`, `small`, etc.) sur un corpus d’échantillons audio représentatifs ;
-  - mesurer le temps de transcription, la latence et l’utilisation des ressources.
-- Générer un rapport de recommandations :
+- Introduire une commande dédiée `benchmark` pour :
+  - évaluer plusieurs modèles Whisper (`tiny`, `base`, `small`, etc.) sur un ou plusieurs échantillons audio représentatifs ;
+  - mesurer le temps de traitement réel (wall time), la latence moyenne par seconde d’audio et, si possible, quelques indicateurs d’utilisation des ressources.
+- Faire en sorte que `benchmark` produise :
+  - un tableau lisible dans la console (modèle → temps total, temps par seconde d’audio, statut) ;
+  - un fichier JSON de résultats (par exemple dans `outputs/benchmark.json`) intégrable dans la configuration.
+- Générer, à partir de ces résultats, une recommandation de modèle :
   - proposer un modèle par défaut optimisé pour le mode `mic` (latence / temps quasi réel) ;
   - documenter les profils « qualité » vs « rapidité » et la façon de les surcharger via la configuration.
+  - ☑ Premier benchmark réel (machine actuelle, `device=cpu`) sur `youtube_30s.wav` (~30 s) :
+    - `tiny` : temps total ≈ 2,68 s (≈ 0,089 s par seconde d’audio).
+    - `base` : temps total ≈ 5,54 s (≈ 0,185 s par seconde d’audio).
+    - Conclusion intermédiaire : sur cette machine, `tiny` est ~2× plus rapide que `base` et constitue un bon candidat pour un preset « rapide » / mode `mic` par défaut, `base` restant un profil plus « qualité ».
 - Spécifier le comportement attendu de la future commande `mic` :
-  - utilisation du modèle recommandé par défaut en fonction des tests ;
+  - utilisation du modèle recommandé par défaut en fonction des tests (`--model auto` / `--device auto`) ;
   - surcharge possible via les options CLI et la configuration (`AppConfig`).
 
 ## Phase 4 – Performance et fiabilité (Semaines 9-10)

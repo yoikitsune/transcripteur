@@ -1,6 +1,8 @@
 torch
-openai-whisper
+faster-whisper
+onnxruntime
 ffmpeg-python
 numpy
 typer
 rich
+sounddevice

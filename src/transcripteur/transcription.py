@@ -1,4 +1,4 @@
-"""Transcription audio à l'aide de Whisper."""
+"""Transcription audio à l'aide de faster-whisper."""
 
 from __future__ import annotations
 
@@ -30,46 +30,75 @@ class TranscriptionResult:
 
 
 class WhisperTranscriber:
-    """Enveloppe autour du modèle Whisper."""
+    """Enveloppe autour du modèle faster-whisper."""
 
     def __init__(self, options: WhisperOptions) -> None:
         self.options = options
-        self._model = None
+        self._model: Any = None
+
+    def _compute_type(self) -> str:
+        if self.options.device == "cpu":
+            return "int8"
+        return "float16"
 
     def load(self) -> None:
         if self._model is None:
-            import whisper
+            from faster_whisper import WhisperModel
 
-            self._model = whisper.load_model(self.options.model_name, device=self.options.device)
+            self._model = WhisperModel(
+                self.options.model_name,
+                device=self.options.device,
+                compute_type=self._compute_type(),
+            )
 
-    def transcribe_file(self, audio_path: Path) -> TranscriptionResult:
+    def _transcribe(self, audio: str | np.ndarray) -> TranscriptionResult:
         self.load()
         assert self._model is not None
 
-        result = self._model.transcribe(
-            str(audio_path),
-            language=self.options.language,
-            temperature=self.options.temperature,
-            beam_size=self.options.beam_size,
-            fp16=self.options.device != "cpu",
-        )
-        segments = [
-            Segment(start=seg["start"], end=seg["end"], text=seg["text"]) for seg in result.get("segments", [])
-        ]
-        return TranscriptionResult(segments=segments, language=result.get("language"), raw=result)
+        vad_params: Optional[Dict[str, Any]] = None
+        if self.options.vad_filter:
+            vad_params = {
+                "threshold": self.options.vad_threshold,
+                "min_silence_duration_ms": self.options.vad_min_silence_duration_ms,
+                "speech_pad_ms": self.options.vad_speech_pad_ms,
+            }
 
-    def transcribe_array(self, audio: np.ndarray) -> TranscriptionResult:
-        self.load()
-        assert self._model is not None
-
-        result = self._model.transcribe(
+        segments_gen, info = self._model.transcribe(
             audio,
             language=self.options.language,
-            temperature=self.options.temperature,
             beam_size=self.options.beam_size,
-            fp16=self.options.device != "cpu",
+            best_of=self.options.best_of,
+            patience=self.options.patience,
+            temperature=self.options.temperature,
+            condition_on_previous_text=self.options.condition_on_previous_text,
+            compression_ratio_threshold=self.options.compression_ratio_threshold,
+            log_prob_threshold=self.options.logprob_threshold,
+            no_speech_threshold=self.options.no_speech_threshold,
+            vad_filter=self.options.vad_filter,
+            vad_parameters=vad_params,
         )
+
         segments = [
-            Segment(start=seg["start"], end=seg["end"], text=seg["text"]) for seg in result.get("segments", [])
+            Segment(start=seg.start, end=seg.end, text=seg.text)
+            for seg in segments_gen
         ]
-        return TranscriptionResult(segments=segments, language=result.get("language"), raw=result)
+        info_dict = {
+            "language": info.language,
+            "language_probability": info.language_probability,
+            "duration": info.duration,
+            "duration_after_vad": getattr(info, "duration_after_vad", None),
+            "all_language_probs": getattr(info, "all_language_probs", None),
+        }
+        return TranscriptionResult(
+            segments=segments,
+            language=info.language,
+            raw={"info": info_dict, "segments": [
+                {"start": s.start, "end": s.end, "text": s.text} for s in segments
+            ]},
+        )
+
+    def transcribe_file(self, audio_path: Path) -> TranscriptionResult:
+        return self._transcribe(str(audio_path))
+
+    def transcribe_array(self, audio: np.ndarray) -> TranscriptionResult:
+        return self._transcribe(audio)

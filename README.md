@@ -45,6 +45,8 @@ PYTHONPATH=src .venv/bin/python -m transcripteur mic \
     --device auto
 ```
 
+Une commande `benchmark` (planifiée) permettra de mesurer les performances des différents modèles Whisper sur votre machine, afin de guider automatiquement ou manuellement le choix du modèle à utiliser, en particulier pour le mode `mic`.
+
 ### Exports générés
 - **Texte (`.txt`)** : transcription continue.
 - **JSON (`.json`)** : segments avec horodatages et métadonnées brutes.

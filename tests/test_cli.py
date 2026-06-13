@@ -14,7 +14,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from transcripteur.cli import app  # noqa: E402  # isort: skip
-import transcripteur.cli as cli_module  # noqa: E402  # isort: skip
+import transcripteur.commands.transcribe as transcribe_module  # noqa: E402  # isort: skip
 from transcripteur.transcription import Segment, TranscriptionResult  # noqa: E402  # isort: skip
 
 runner = CliRunner()
@@ -29,7 +29,7 @@ def test_version_command() -> None:
 def test_doctor_skip_whisper() -> None:
     result = runner.invoke(app, ["doctor", "--skip-whisper"])
     assert result.exit_code == 0
-    assert "Diagnostic de l’environnement Transcripteur" in result.stdout
+    assert "Diagnostic de l'environnement Transcripteur" in result.stdout
     assert "Vérification Whisper ignorée" in result.stdout
 
 
@@ -49,8 +49,11 @@ def test_transcribe_integration_stub(tmp_path: Path, monkeypatch) -> None:
             raw={},
         )
 
-    monkeypatch.setattr(cli_module, "extract_audio", fake_extract_audio)
-    monkeypatch.setattr(cli_module.WhisperTranscriber, "transcribe_file", fake_transcribe_file)
+    monkeypatch.setattr(transcribe_module, "extract_audio", fake_extract_audio)
+    monkeypatch.setattr(transcribe_module.WhisperTranscriber, "transcribe_file", fake_transcribe_file)
+    monkeypatch.setattr(transcribe_module, "_export_text", lambda result, path: (path.write_text("test"), path)[1])
+    monkeypatch.setattr(transcribe_module, "_export_json", lambda result, path: (path.write_text("{}"), path)[1])
+    monkeypatch.setattr(transcribe_module, "_export_srt", lambda result, path: (path.write_text(""), path)[1])
 
     result = runner.invoke(
         app,

@@ -20,6 +20,22 @@ class WhisperOptions:
     language: str = "fr"
     beam_size: int = 5
     temperature: float = 0.0
+    # --- Fiabilité ---
+    best_of: int = 5
+    patience: float = 1.0
+    condition_on_previous_text: bool = True
+    compression_ratio_threshold: float = 2.4
+    logprob_threshold: float = -1.0
+    no_speech_threshold: float = 0.6
+    # --- VAD (Silero via faster-whisper) ---
+    vad_filter: bool = True
+    vad_threshold: float = 0.5
+    vad_min_silence_duration_ms: int = 500
+    vad_speech_pad_ms: int = 200
+    # --- Prétraitement audio ---
+    denoise: bool = True
+    normalize: bool = True
+    highpass_freq: int = 80
 
 
 @dataclass(slots=True)
@@ -76,6 +92,19 @@ class AppConfig:
                 "language": self.whisper.language,
                 "beam_size": self.whisper.beam_size,
                 "temperature": self.whisper.temperature,
+                "best_of": self.whisper.best_of,
+                "patience": self.whisper.patience,
+                "condition_on_previous_text": self.whisper.condition_on_previous_text,
+                "compression_ratio_threshold": self.whisper.compression_ratio_threshold,
+                "logprob_threshold": self.whisper.logprob_threshold,
+                "no_speech_threshold": self.whisper.no_speech_threshold,
+                "vad_filter": self.whisper.vad_filter,
+                "vad_threshold": self.whisper.vad_threshold,
+                "vad_min_silence_duration_ms": self.whisper.vad_min_silence_duration_ms,
+                "vad_speech_pad_ms": self.whisper.vad_speech_pad_ms,
+                "denoise": self.whisper.denoise,
+                "normalize": self.whisper.normalize,
+                "highpass_freq": self.whisper.highpass_freq,
             },
             "export": {
                 "export_text": self.export.export_text,
